@@ -31,6 +31,7 @@ export default {
       cursoId: null,
       tareaIndex: null,
       nombreTarea: "Tarea",
+      usuario: JSON.parse(localStorage.getItem("usuarioActual")),
     };
   },
   mounted() {
@@ -43,7 +44,6 @@ export default {
       return;
     }
 
-    // Cargar nombre de tarea desde localStorage para mostrar título más exacto
     const curso = JSON.parse(localStorage.getItem("cursoSeleccionado"));
     if (curso && curso.tareas && curso.tareas[this.tareaIndex]) {
       this.nombreTarea = curso.tareas[this.tareaIndex].titulo || "Tarea";
@@ -57,8 +57,9 @@ export default {
         return;
       }
 
-      // Simular subida guardando metadata en localStorage
-      let archivosSubidos = JSON.parse(localStorage.getItem("archivosSubidos") || "{}");
+      const clave = `archivosSubidos_${this.usuario.email}`;
+      let archivosSubidos = JSON.parse(localStorage.getItem(clave) || "{}");
+
       if (!archivosSubidos[this.cursoId]) archivosSubidos[this.cursoId] = {};
 
       archivosSubidos[this.cursoId][this.tareaIndex] = {
@@ -66,7 +67,7 @@ export default {
         fechaSubida: new Date().toISOString(),
       };
 
-      localStorage.setItem("archivosSubidos", JSON.stringify(archivosSubidos));
+      localStorage.setItem(clave, JSON.stringify(archivosSubidos));
 
       alert("Archivo subido correctamente.");
       this.$router.push({ path: "/CursoGenerico", query: { cursoId: this.cursoId } });

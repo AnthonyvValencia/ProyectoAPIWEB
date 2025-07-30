@@ -71,9 +71,9 @@ export default {
       return;
     }
 
-    const evaluacionesData =
-      JSON.parse(localStorage.getItem("evaluaciones")) || {};
-    const evaluacionesCurso = evaluacionesData[this.cursoId] || [];
+    const clave = `evaluaciones_curso_${this.cursoId}`;
+    const evaluacionesCurso = JSON.parse(localStorage.getItem(clave) || "[]");
+
 
     if (
       this.evaluacionIndex < 0 ||

@@ -1,15 +1,15 @@
 <template>
   <div id="app">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light shadow-sm">
-      <div class="container">
-        <a class="navbar-brand fw-bold" href="/Inicio">Educan593</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-purple">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/Cursos">Educan593</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
           <ul class="navbar-nav me-3">
-            <li class="nav-item"><a class="nav-link" href="/Inicio">Home</a></li>
+            
           </ul>
           <a href="/Certificados" class="nav-link me-3">Certificado</a>
           <a href="/Perfil" class="nav-link me-3">Perfil</a>
@@ -135,11 +135,24 @@ export default {
       this.$router.push({ path: curso.url, query: { cursoId: curso.id } });
     },
     eliminarCurso(index) {
-      if (confirm("¿Estás seguro de eliminar este curso?")) {
+      const cursoAEliminar = this.cursosExtras[index];
+      if (confirm(`¿Estás seguro de eliminar el curso "${cursoAEliminar.titulo}"?\n\n⚠️ También se eliminará el certificado asociado a este curso.`)) {
+        // Eliminar el certificado asociado al curso ANTES de eliminar el curso
+        const certificadoEliminado = this.eliminarCertificadoPorCurso(cursoAEliminar.id);
+        
+        // Eliminar el curso
         this.cursosExtras.splice(index, 1);
         localStorage.setItem("cursosAgregados", JSON.stringify(this.cursosExtras));
+        
+        // Mostrar mensaje de confirmación
+        if (certificadoEliminado) {
+          alert(`✅ Curso "${cursoAEliminar.titulo}" eliminado exitosamente.\n🗑️ Certificado asociado también eliminado.`);
+        } else {
+          alert(`✅ Curso "${cursoAEliminar.titulo}" eliminado exitosamente.\n⚠️ No se encontró certificado asociado.`);
+        }
       }
     },
+    
     agregarCurso() {
       const nuevo = {
         id: "curso_extra_" + Date.now(),
@@ -148,16 +161,139 @@ export default {
         autor: "Profesor agregado",
         especialidad: "Curso personalizado",
         url: "/CursoGenerico",
-        videos: [{ titulo: "Clase 1", url: this.nuevoCurso.videoUrl }],
-        tareas: [{ titulo: "Actividad 1", descripcion: this.nuevoCurso.tarea, enlace: "/archivo", boton: "Subir archivo" }]
+        videos: this.nuevoCurso.videoUrl ? 
+          [{ titulo: "Clase 1", url: this.nuevoCurso.videoUrl }] : 
+          [{ titulo: "Clase 1", url: "" }],
+        tareas: this.nuevoCurso.tarea ? 
+          [{ titulo: "Actividad 1", descripcion: this.nuevoCurso.tarea, enlace: "/archivo", boton: "Subir archivo" }] :
+          [{ titulo: "Actividad 1", descripcion: "Sin tarea asignada", enlace: "/archivo", boton: "Subir archivo" }]
       };
+      
+      // Agregar curso a la lista
       this.cursosExtras.push(nuevo);
       localStorage.setItem("cursosAgregados", JSON.stringify(this.cursosExtras));
+      
+      // GENERAR CERTIFICADO AUTOMÁTICAMENTE
+      const certificadoGenerado = this.generarCertificadoParaCurso(nuevo);
+      
+      // Limpiar formulario
       this.nuevoCurso = { titulo: "", descripcion: "", videoUrl: "", tarea: "" };
+      
+      if (certificadoGenerado) {
+        alert(`✅ Curso "${nuevo.titulo}" creado exitosamente.\n🏆 Certificado generado automáticamente y disponible en la sección Certificados.`);
+      } else {
+        alert(`✅ Curso "${nuevo.titulo}" creado exitosamente.\n⚠️ No se pudo generar el certificado automáticamente.`);
+      }
     },
+
+    // Método para generar certificado automáticamente sin necesidad de sesión
+    generarCertificadoParaCurso(curso) {
+      try {
+        // Crear certificado con datos predeterminados del curso
+        const certificado = {
+          id: `cert_${curso.id}_${Date.now()}`,
+          cursoId: curso.id,
+          nombreCurso: curso.titulo,
+          nombreEstudiante: "Curso disponible para certificación", // Placeholder
+          emailEstudiante: "sistema@educan593.com", // Email del sistema
+          fechaCreacion: new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          fechaEmision: new Date().toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          tipoCreador: 'profesor',
+          descripcionCurso: curso.descripcion,
+          estado: 'disponible',
+          duracionCurso: '40 horas académicas',
+          modalidad: 'Virtual',
+          institucion: 'Educan593',
+          codigoCertificado: `EDU593-${Date.now().toString().slice(-6)}`,
+          autorCurso: curso.autor || 'Profesor agregado',
+          // Información adicional para el certificado
+          competenciasAdquiridas: [
+            'Dominio de conceptos fundamentales del curso',
+            'Aplicación práctica de conocimientos adquiridos',
+            'Desarrollo de habilidades específicas de la materia'
+          ],
+          // Marcar como certificado de curso (no de usuario específico)
+          tipoCertificado: 'curso_disponible',
+          cursoCreador: true
+        };
+        
+        // Guardar certificado en una clave global de certificados disponibles
+        let certificadosDisponibles = JSON.parse(localStorage.getItem("certificados_disponibles") || "[]");
+        
+        // Verificar que no exista ya un certificado para este curso
+        const existeCertificado = certificadosDisponibles.some(cert => cert.cursoId === curso.id);
+        if (!existeCertificado) {
+          certificadosDisponibles.push(certificado);
+          localStorage.setItem("certificados_disponibles", JSON.stringify(certificadosDisponibles));
+          
+          // También guardarlo en la clave global de todos los certificados
+          const certificadosGlobales = JSON.parse(localStorage.getItem("todos_certificados") || "[]");
+          certificadosGlobales.push(certificado);
+          localStorage.setItem("todos_certificados", JSON.stringify(certificadosGlobales));
+          
+          console.log("Certificado generado exitosamente para el curso:", certificado);
+          return true;
+        } else {
+          console.log("Ya existe un certificado para este curso");
+          return false;
+        }
+        
+      } catch (error) {
+        console.error("Error al generar certificado:", error);
+        return false;
+      }
+    },
+
+    // Método para eliminar certificado cuando se elimina un curso
+    eliminarCertificadoPorCurso(cursoId) {
+      try {
+        let certificadoEliminado = false;
+        
+        // Eliminar de certificados disponibles
+        let certificadosDisponibles = JSON.parse(localStorage.getItem("certificados_disponibles") || "[]");
+        const cantidadAntes = certificadosDisponibles.length;
+        certificadosDisponibles = certificadosDisponibles.filter(cert => cert.cursoId !== cursoId);
+        
+        if (certificadosDisponibles.length < cantidadAntes) {
+          certificadoEliminado = true;
+          localStorage.setItem("certificados_disponibles", JSON.stringify(certificadosDisponibles));
+        }
+        
+        // Eliminar de certificados globales
+        let certificadosGlobales = JSON.parse(localStorage.getItem("todos_certificados") || "[]");
+        certificadosGlobales = certificadosGlobales.filter(cert => cert.cursoId !== cursoId);
+        localStorage.setItem("todos_certificados", JSON.stringify(certificadosGlobales));
+        
+        console.log(`Certificado ${certificadoEliminado ? 'eliminado' : 'no encontrado'} para el curso:`, cursoId);
+        return certificadoEliminado;
+      } catch (error) {
+        console.error("Error al eliminar certificado:", error);
+        return false;
+      }
+    },
+
+    // Método para verificar certificados disponibles
+    verificarCertificadosDisponibles() {
+      return JSON.parse(localStorage.getItem("certificados_disponibles") || "[]");
+    },
+
+    // Método para obtener certificado por ID de curso
+    obtenerCertificadoPorCurso(cursoId) {
+      const certificados = this.verificarCertificadosDisponibles();
+      return certificados.find(cert => cert.cursoId === cursoId);
+    },
+
     cerrarSesion() {
-      localStorage.removeItem("rol");
       localStorage.removeItem("usuario");
+      localStorage.removeItem("rol");
       this.$router.push("/Sesion");
     }
   }
@@ -169,49 +305,120 @@ html, body {
   height: 100%;
   margin: 0;
   background-color: #f8f9fa;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
+
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
+
 main {
   flex: 1;
 }
+
+/* Navbar */
+.navbar-expand-lg {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.navbar .nav-link {
+  color: #fffefe;
+  font-weight: 500;
+}
+.navbar .nav-link:hover {
+  color: #7e22ce;
+}
+
+/* Hero Section */
 .hero {
   text-align: center;
   padding: 4rem 2rem;
   background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+  background-color: #ede9f5;
+  color: #4b0082;
 }
-.card h5 {
-  font-weight: bold;
+
+.hero h1 {
+  font-weight: 700;
 }
+
+.hero p {
+  font-size: 1.1rem;
+}
+
+/* Card de curso */
+.bg-purple {
+  background-color: #7c3aed !important;
+}
+
 .card {
   background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 1rem;
+  transition: transform 0.2s ease;
 }
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card h5 {
+  font-weight: 600;
+  color: #4b0082;
+}
+
 .card-footer {
   background-color: transparent;
   border-top: none;
 }
+
 .btn-started {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  background-color: transparent;
   color: #7e22ce;
-  font-weight: bold;
+  font-weight: 600;
   text-decoration: none;
+  border: 1px solid #7e22ce;
+  transition: all 0.3s ease;
 }
+
 .btn-started:hover {
-  text-decoration: underline;
-}
-.btn-success {
-  color: #c8c3cb;
   background-color: #7e22ce;
-}
-.navbar-expand-lg {
-  background-color: rgb(255, 255, 255);
-}
-footer {
-  background-color: #703ca0;
   color: white;
-  padding: 0.1rem 0.2rem;
+}
+
+/* Botón de agregar curso */
+.btn-success {
+  color: #fff;
+  background-color: #7e22ce;
+  border: none;
+}
+
+.btn-success:hover {
+  background-color: #5a189a;
+}
+
+/* Formulario */
+form input,
+form textarea {
+  border-radius: 0.5rem;
+}
+
+/* Footer */
+footer {
+  background-color: #4c4f4f;
+  color: white;
+  padding: 0.7rem 0.2rem;
   text-align: center;
+  font-size: 0.9rem;
+}
+
+footer p {
+  margin: 0;
 }
 </style>

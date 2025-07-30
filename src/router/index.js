@@ -11,6 +11,8 @@ import RealizarEvaluacion from '@/views/RealizarEvaluacion.vue'
 import AdministradosView from '@/views/AdministradosView.vue'
 import PerfilView from '@/views/PerfilView.vue'
 import CertificadosView from '@/views/CertificadosView.vue'
+import Registroview from '@/views/Registroview.vue'
+
 
 
 
@@ -30,6 +32,7 @@ const routes = [
   {path: '/Administrador',name: 'Administrador',component: AdministradosView},
   {path: '/Perfil',name: 'Perfil',component: PerfilView},
   {path: '/Certificados',name: 'Certificados',component: CertificadosView},
+  {path: '/Registro',name: 'Registro',component: Registroview},
 
   // Puedes agregar otras rutas como:
   // {

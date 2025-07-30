@@ -91,26 +91,24 @@ export default {
         enlace: `vista_archivo.html?cursoId=${encodeURIComponent(this.cursoId)}`,
       };
 
-      // Agregar la tarea al curso seleccionado
+      // Agregar tarea al curso seleccionado
       this.curso.tareas = this.curso.tareas || [];
       this.curso.tareas.push(nuevaTarea);
-
-      // Guardar el curso actualizado en localStorage
       localStorage.setItem("cursoSeleccionado", JSON.stringify(this.curso));
 
-      // Guardar la tarea también en el objeto 'tareas' en localStorage
-      let tareasGuardadas = JSON.parse(localStorage.getItem("tareas")) || {};
-      if (!Array.isArray(tareasGuardadas[this.cursoId])) {
-        tareasGuardadas[this.cursoId] = [];
-      }
-      tareasGuardadas[this.cursoId].push(nuevaTarea);
-      localStorage.setItem("tareas", JSON.stringify(tareasGuardadas));
+      // Guardar tareas globalmente por curso
+      const tareasKey = `tareas_curso_${this.cursoId}`;
+      let tareasGuardadas = JSON.parse(localStorage.getItem(tareasKey) || "[]");
+      tareasGuardadas.push(nuevaTarea);
+      localStorage.setItem(tareasKey, JSON.stringify(tareasGuardadas));
 
       alert("Tarea guardada correctamente.");
       this.$router.push({ path: "/CursoGenerico", query: { cursoId: this.cursoId } });
     },
     cancelar() {
-      this.$router.back();
+      if (confirm("¿Estás seguro? Se perderán los cambios no guardados.")) {
+        this.$router.back();
+      }
     },
   },
 };

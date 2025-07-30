@@ -44,9 +44,6 @@
             <div class="col-12">
               <input v-model="nuevoCurso.videoUrl" class="form-control" placeholder="URL del video de YouTube (opcional)">
             </div>
-            <div class="col-12">
-              <textarea v-model="nuevoCurso.tarea" class="form-control" placeholder=" Categoria (opcional)"></textarea>
-            </div>
             <div class="col-12 text-end">
               <button type="submit" class="btn btn-success">Agregar Curso</button>
             </div>
@@ -164,9 +161,7 @@ export default {
         videos: this.nuevoCurso.videoUrl ? 
           [{ titulo: "Clase 1", url: this.nuevoCurso.videoUrl }] : 
           [{ titulo: "Clase 1", url: "" }],
-        tareas: this.nuevoCurso.tarea ? 
-          [{ titulo: "Actividad 1", descripcion: this.nuevoCurso.tarea, enlace: "/archivo", boton: "Subir archivo" }] :
-          [{ titulo: "Actividad 1", descripcion: "Sin tarea asignada", enlace: "/archivo", boton: "Subir archivo" }]
+        
       };
       
       // Agregar curso a la lista

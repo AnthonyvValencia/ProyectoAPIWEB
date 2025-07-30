@@ -45,7 +45,7 @@
               <input v-model="nuevoCurso.videoUrl" class="form-control" placeholder="URL del video de YouTube (opcional)">
             </div>
             <div class="col-12">
-              <textarea v-model="nuevoCurso.tarea" class="form-control" placeholder="Descripción de tarea o evaluación (opcional)"></textarea>
+              <textarea v-model="nuevoCurso.tarea" class="form-control" placeholder=" Categoria (opcional)"></textarea>
             </div>
             <div class="col-12 text-end">
               <button type="submit" class="btn btn-success">Agregar Curso</button>
